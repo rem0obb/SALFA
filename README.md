@@ -25,7 +25,8 @@ python3 ctf_generator_gui.py
 ```
 
 The interface accepts multiple VINs separated by newlines, spaces, commas, or
-semicolons.
+semicolons. It uses the built-in CTF update profile by default. Use `Browse` to
+select another `UPDATE.INF`, or `Use built-in` to restore the bundled profile.
 
 ## Windows build
 

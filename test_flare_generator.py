@@ -1,6 +1,8 @@
 import hashlib
 import struct
+import tempfile
 import unittest
+from pathlib import Path
 
 from flare_generator import DEFAULT_UPDATE_SEED, generate_code, generate_many, read_update_seed
 from ctf_generator_gui import parse_vins, self_test
@@ -40,6 +42,17 @@ class FlareGeneratorTests(unittest.TestCase):
             ["SALFA2AEXEH401960", "SALFA2AE8DH343605"],
         )
         self.assertTrue(self_test())
+
+    def test_external_update_inf(self):
+        seed = bytes(reversed(range(160)))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "UPDATE.INF")
+            path.write_bytes(seed)
+            self.assertEqual(read_update_seed(path), seed)
+            self.assertEqual(
+                generate_code("SALFA2AEXEH401960", read_update_seed(path), "EU"),
+                generate_code("SALFA2AEXEH401960", seed, "EU"),
+            )
 
     def test_rejects_invalid_input(self):
         with self.assertRaises(ValueError):

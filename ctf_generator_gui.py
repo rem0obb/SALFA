@@ -7,9 +7,10 @@ import argparse
 import re
 import sys
 import tkinter as tk
-from tkinter import messagebox, ttk
+from pathlib import Path
+from tkinter import filedialog, messagebox, ttk
 
-from flare_generator import DEFAULT_UPDATE_SEED, REGIONS, generate_code
+from flare_generator import DEFAULT_UPDATE_SEED, REGIONS, generate_code, read_update_seed
 
 
 EXAMPLE_RESULTS = (
@@ -39,14 +40,16 @@ class App(tk.Tk):
         self.minsize(620, 420)
 
         self.region = tk.StringVar(value="EU")
+        self.update_file = tk.StringVar(value="Built-in CTF profile")
         self.status = tk.StringVar(value="Ready")
+        self._update_path: Path | None = None
         self._build()
 
     def _build(self) -> None:
         root = ttk.Frame(self, padding=16)
         root.pack(fill="both", expand=True)
         root.columnconfigure(0, weight=1)
-        root.rowconfigure(4, weight=1)
+        root.rowconfigure(6, weight=1)
 
         header = ttk.Frame(root)
         header.grid(row=0, column=0, sticky="ew")
@@ -64,9 +67,23 @@ class App(tk.Tk):
         )
         region.grid(row=0, column=2, sticky="e")
 
-        ttk.Label(root, text="VINs").grid(row=1, column=0, sticky="w", pady=(18, 6))
+        ttk.Label(root, text="UPDATE.INF").grid(row=1, column=0, sticky="w", pady=(18, 6))
+        update_row = ttk.Frame(root)
+        update_row.grid(row=2, column=0, sticky="ew")
+        update_row.columnconfigure(0, weight=1)
+        ttk.Entry(update_row, textvariable=self.update_file, state="readonly").grid(
+            row=0, column=0, sticky="ew"
+        )
+        ttk.Button(update_row, text="Browse", command=self._browse_update_inf).grid(
+            row=0, column=1, padx=(8, 0)
+        )
+        ttk.Button(update_row, text="Use built-in", command=self._use_builtin_update).grid(
+            row=0, column=2, padx=(8, 0)
+        )
+
+        ttk.Label(root, text="VINs").grid(row=3, column=0, sticky="w", pady=(18, 6))
         input_frame = ttk.Frame(root)
-        input_frame.grid(row=2, column=0, sticky="nsew")
+        input_frame.grid(row=4, column=0, sticky="nsew")
         input_frame.columnconfigure(0, weight=1)
         self.vin_input = tk.Text(input_frame, height=6, wrap="none", undo=True)
         self.vin_input.grid(row=0, column=0, sticky="nsew")
@@ -75,13 +92,13 @@ class App(tk.Tk):
         self.vin_input.configure(yscrollcommand=input_scroll.set)
 
         actions = ttk.Frame(root)
-        actions.grid(row=3, column=0, sticky="ew", pady=12)
+        actions.grid(row=5, column=0, sticky="ew", pady=12)
         ttk.Button(actions, text="Generate", command=self._generate).pack(side="left")
         ttk.Button(actions, text="Copy", command=self._copy).pack(side="left", padx=(8, 0))
         ttk.Button(actions, text="Clear", command=self._clear).pack(side="left", padx=(8, 0))
 
         table_frame = ttk.Frame(root)
-        table_frame.grid(row=4, column=0, sticky="nsew")
+        table_frame.grid(row=6, column=0, sticky="nsew")
         table_frame.columnconfigure(0, weight=1)
         table_frame.rowconfigure(0, weight=1)
         self.results = ttk.Treeview(
@@ -101,10 +118,34 @@ class App(tk.Tk):
         result_scroll.grid(row=0, column=1, sticky="ns")
         self.results.configure(yscrollcommand=result_scroll.set)
 
-        ttk.Label(root, textvariable=self.status).grid(row=5, column=0, sticky="w", pady=(10, 0))
+        ttk.Label(root, textvariable=self.status).grid(row=7, column=0, sticky="w", pady=(10, 0))
 
         self.bind("<Control-Return>", lambda _event: self._generate())
         self.vin_input.focus_set()
+
+    def _browse_update_inf(self) -> None:
+        filename = filedialog.askopenfilename(
+            title="Select UPDATE.INF",
+            filetypes=(("UPDATE.INF", "UPDATE.INF"), ("INF files", "*.INF"), ("All files", "*.*")),
+            parent=self,
+        )
+        if not filename:
+            return
+        path = Path(filename).resolve()
+        try:
+            read_update_seed(path)
+        except (OSError, ValueError) as error:
+            messagebox.showerror("Invalid UPDATE.INF", str(error), parent=self)
+            self.status.set("UPDATE.INF selection failed")
+            return
+        self._update_path = path
+        self.update_file.set(str(path))
+        self.status.set(f"Loaded {path.name}")
+
+    def _use_builtin_update(self) -> None:
+        self._update_path = None
+        self.update_file.set("Built-in CTF profile")
+        self.status.set("Using built-in CTF profile")
 
     def _generate(self) -> None:
         try:
@@ -112,8 +153,9 @@ class App(tk.Tk):
             if not vins:
                 raise ValueError("Enter at least one VIN.")
             region = self.region.get()
-            generated = [(vin, region, generate_code(vin, DEFAULT_UPDATE_SEED, region)) for vin in vins]
-        except ValueError as error:
+            seed = read_update_seed(self._update_path)
+            generated = [(vin, region, generate_code(vin, seed, region)) for vin in vins]
+        except (OSError, ValueError) as error:
             messagebox.showerror("Invalid input", str(error), parent=self)
             self.status.set("Generation failed")
             return

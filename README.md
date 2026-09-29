@@ -1,15 +1,15 @@
 # SALFA CTF Code Generator
 
-Gerador com interface grafica para codigos JLR Gen21 recuperados do firmware do
-CTF. O perfil de 160 bytes do `UPDATE.INF` esta embutido no programa.
+Graphical JLR Gen21 code generator recovered from the CTF firmware. The
+160-byte `UPDATE.INF` profile is embedded in the application.
 
-## Usar pelo terminal
+## Command line
 
 ```bash
 python3 flare_generator.py SALFA2AEXEH401960 --region EU
 ```
 
-Mais de um VIN pode ser informado na mesma execucao:
+Multiple VINs can be processed in one run:
 
 ```bash
 python3 flare_generator.py \
@@ -18,47 +18,47 @@ python3 flare_generator.py \
   --region EU
 ```
 
-## Interface grafica
+## Graphical interface
 
 ```bash
 python3 ctf_generator_gui.py
 ```
 
-A interface aceita varios VINs separados por linha, espaco, virgula ou
-ponto-e-virgula.
+The interface accepts multiple VINs separated by newlines, spaces, commas, or
+semicolons.
 
-## Build para Windows
+## Windows build
 
-No Windows, execute:
+On Windows, run:
 
 ```powershell
 .\build_windows_exe.ps1
 ```
 
-Ou abra `build_windows_exe.bat`. O script:
+Alternatively, open `build_windows_exe.bat`. The script:
 
-1. Localiza Python 3.10 ou mais recente.
-2. Instala Python com `winget` quando necessario.
-3. Instala ou atualiza o PyInstaller.
-4. Gera um unico `dist\SALFAGenerator.exe` sem dependencias externas.
-5. Executa o autoteste do EXE para validar o arquivo PKG embutido.
+1. Locates Python 3.10 or newer.
+2. Installs Python with `winget` when necessary.
+3. Installs or updates PyInstaller.
+4. Creates one standalone `dist\SALFAGenerator.exe`.
+5. Runs the EXE self-test to validate its embedded PKG archive.
 
-Python e PyInstaller sao necessarios somente para compilar. A maquina que
-executa `SALFAGenerator.exe` nao precisa ter Python instalado.
+Python and PyInstaller are required only on the build machine. The computer
+running `SALFAGenerator.exe` does not need Python installed.
 
-## Build para Linux
+## Linux build
 
 ```bash
 ./build_linux_app.sh
 ```
 
-O executavel sera criado em `dist/SALFAGenerator` e validado automaticamente.
+The executable is created at `dist/SALFAGenerator` and verified automatically.
 
-## Testes
+## Tests
 
 ```bash
 python3 -m unittest -v
 ```
 
-Veja [`FLARE_ANALYSIS.md`](FLARE_ANALYSIS.md) para o algoritmo e os enderecos
-relevantes do firmware.
+See [`FLARE_ANALYSIS.md`](FLARE_ANALYSIS.md) for the recovered algorithm and
+the relevant firmware addresses.

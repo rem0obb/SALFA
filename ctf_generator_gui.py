@@ -39,7 +39,7 @@ class App(tk.Tk):
         self.minsize(620, 420)
 
         self.region = tk.StringVar(value="EU")
-        self.status = tk.StringVar(value="Pronto")
+        self.status = tk.StringVar(value="Ready")
         self._build()
 
     def _build(self) -> None:
@@ -54,7 +54,7 @@ class App(tk.Tk):
         ttk.Label(header, text="SALFA Code Generator", font=("TkDefaultFont", 15, "bold")).grid(
             row=0, column=0, sticky="w"
         )
-        ttk.Label(header, text="Regiao").grid(row=0, column=1, padx=(16, 6))
+        ttk.Label(header, text="Region").grid(row=0, column=1, padx=(16, 6))
         region = ttk.Combobox(
             header,
             textvariable=self.region,
@@ -76,9 +76,9 @@ class App(tk.Tk):
 
         actions = ttk.Frame(root)
         actions.grid(row=3, column=0, sticky="ew", pady=12)
-        ttk.Button(actions, text="Gerar", command=self._generate).pack(side="left")
-        ttk.Button(actions, text="Copiar", command=self._copy).pack(side="left", padx=(8, 0))
-        ttk.Button(actions, text="Limpar", command=self._clear).pack(side="left", padx=(8, 0))
+        ttk.Button(actions, text="Generate", command=self._generate).pack(side="left")
+        ttk.Button(actions, text="Copy", command=self._copy).pack(side="left", padx=(8, 0))
+        ttk.Button(actions, text="Clear", command=self._clear).pack(side="left", padx=(8, 0))
 
         table_frame = ttk.Frame(root)
         table_frame.grid(row=4, column=0, sticky="nsew")
@@ -91,8 +91,8 @@ class App(tk.Tk):
             selectmode="extended",
         )
         self.results.heading("vin", text="VIN")
-        self.results.heading("region", text="Regiao")
-        self.results.heading("code", text="Codigo")
+        self.results.heading("region", text="Region")
+        self.results.heading("code", text="Code")
         self.results.column("vin", width=280, minwidth=180, anchor="w")
         self.results.column("region", width=90, minwidth=70, anchor="center", stretch=False)
         self.results.column("code", width=160, minwidth=120, anchor="center")
@@ -110,18 +110,18 @@ class App(tk.Tk):
         try:
             vins = parse_vins(self.vin_input.get("1.0", "end"))
             if not vins:
-                raise ValueError("Informe pelo menos um VIN.")
+                raise ValueError("Enter at least one VIN.")
             region = self.region.get()
             generated = [(vin, region, generate_code(vin, DEFAULT_UPDATE_SEED, region)) for vin in vins]
         except ValueError as error:
-            messagebox.showerror("Entrada invalida", str(error), parent=self)
-            self.status.set("Falha na geracao")
+            messagebox.showerror("Invalid input", str(error), parent=self)
+            self.status.set("Generation failed")
             return
 
         self._clear_results()
         for row in generated:
             self.results.insert("", "end", values=row)
-        self.status.set(f"{len(generated)} codigo(s) gerado(s)")
+        self.status.set(f"Generated {len(generated)} code(s)")
 
     def _copy(self) -> None:
         selected = self.results.selection()
@@ -134,7 +134,7 @@ class App(tk.Tk):
             return
         self.clipboard_clear()
         self.clipboard_append("\n".join(lines))
-        self.status.set(f"{len(lines)} resultado(s) copiado(s)")
+        self.status.set(f"Copied {len(lines)} result(s)")
 
     def _clear_results(self) -> None:
         for item in self.results.get_children():
@@ -143,7 +143,7 @@ class App(tk.Tk):
     def _clear(self) -> None:
         self.vin_input.delete("1.0", "end")
         self._clear_results()
-        self.status.set("Pronto")
+        self.status.set("Ready")
         self.vin_input.focus_set()
 
 

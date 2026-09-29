@@ -3,6 +3,7 @@ import struct
 import unittest
 
 from flare_generator import DEFAULT_UPDATE_SEED, generate_code, generate_many, read_update_seed
+from ctf_generator_gui import parse_vins, self_test
 
 
 class FlareGeneratorTests(unittest.TestCase):
@@ -32,6 +33,13 @@ class FlareGeneratorTests(unittest.TestCase):
         self.assertEqual(generate_code("SALFA2AEXEH401960", DEFAULT_UPDATE_SEED, "EU"), "2A8AD051")
         self.assertEqual(generate_code("SALFA2AE8DH343605", DEFAULT_UPDATE_SEED, "EU"), "2921B711")
         self.assertEqual(read_update_seed(), DEFAULT_UPDATE_SEED)
+
+    def test_gui_accepts_multiple_vins(self):
+        self.assertEqual(
+            parse_vins("salfa2aexeh401960\nSALFA2AE8DH343605, SALFA2AEXEH401960"),
+            ["SALFA2AEXEH401960", "SALFA2AE8DH343605"],
+        )
+        self.assertTrue(self_test())
 
     def test_rejects_invalid_input(self):
         with self.assertRaises(ValueError):

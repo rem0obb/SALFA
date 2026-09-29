@@ -1,14 +1,15 @@
-# SALFA CTF code generator
+# SALFA CTF Code Generator
 
-Gerador do codigo de ativacao JLR Gen21 recuperado por engenharia reversa do
-firmware fornecido no CTF.
+Gerador com interface grafica para codigos JLR Gen21 recuperados do firmware do
+CTF. O perfil de 160 bytes do `UPDATE.INF` esta embutido no programa.
 
-O perfil do `UPDATE.INF` usado pelo desafio ja esta embutido. Para gerar um ou
-mais codigos, informe os VINs e a regiao:
+## Usar pelo terminal
 
 ```bash
 python3 flare_generator.py SALFA2AEXEH401960 --region EU
 ```
+
+Mais de um VIN pode ser informado na mesma execucao:
 
 ```bash
 python3 flare_generator.py \
@@ -17,20 +18,41 @@ python3 flare_generator.py \
   --region EU
 ```
 
-Resultado esperado:
-
-```text
-SALFA2AEXEH401960 -> 2A8AD051
-SALFA2AE8DH343605 -> 2921B711
-```
-
-Para usar outra midia de atualizacao:
+## Interface grafica
 
 ```bash
-python3 flare_generator.py SALFA2AEXEH401960 \
-  --region EU \
-  --update-inf /caminho/UPDATE.INF
+python3 ctf_generator_gui.py
 ```
+
+A interface aceita varios VINs separados por linha, espaco, virgula ou
+ponto-e-virgula.
+
+## Build para Windows
+
+No Windows, execute:
+
+```powershell
+.\build_windows_exe.ps1
+```
+
+Ou abra `build_windows_exe.bat`. O script:
+
+1. Localiza Python 3.10 ou mais recente.
+2. Instala Python com `winget` quando necessario.
+3. Instala ou atualiza o PyInstaller.
+4. Gera um unico `dist\SALFAGenerator.exe` sem dependencias externas.
+5. Executa o autoteste do EXE para validar o arquivo PKG embutido.
+
+Python e PyInstaller sao necessarios somente para compilar. A maquina que
+executa `SALFAGenerator.exe` nao precisa ter Python instalado.
+
+## Build para Linux
+
+```bash
+./build_linux_app.sh
+```
+
+O executavel sera criado em `dist/SALFAGenerator` e validado automaticamente.
 
 ## Testes
 
@@ -38,7 +60,5 @@ python3 flare_generator.py SALFA2AEXEH401960 \
 python3 -m unittest -v
 ```
 
-O programa usa apenas a biblioteca padrao do Python. Consulte
-[`FLARE_ANALYSIS.md`](FLARE_ANALYSIS.md) para o algoritmo recuperado, enderecos
-do firmware e validacoes realizadas.
-
+Veja [`FLARE_ANALYSIS.md`](FLARE_ANALYSIS.md) para o algoritmo e os enderecos
+relevantes do firmware.

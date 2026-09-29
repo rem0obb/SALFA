@@ -1,5 +1,14 @@
 __pycache__/
 *.py[cod]
-dist/
+.venv-build/
 build/
-*.spec
+dist/
+
+# Local firmware research artifacts
+downloads/
+*.BIN
+*.KWI
+*.kwi
+*.rar
+*.zip
+Algo_should_be_here

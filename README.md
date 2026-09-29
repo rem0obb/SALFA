@@ -43,6 +43,9 @@ Alternatively, open `build_windows_exe.bat`. The script:
 4. Creates one standalone `dist\SALFAGenerator.exe`.
 5. Runs the EXE self-test to validate its embedded PKG archive.
 
+The build is staged on the local system drive, so the script also works when
+the project is opened from a mapped drive such as `Z:` or a network share.
+
 Python and PyInstaller are required only on the build machine. The computer
 running `SALFAGenerator.exe` does not need Python installed.
 

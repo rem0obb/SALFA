@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-Set-Location $PSScriptRoot
+$sourceRoot = $PSScriptRoot
 
 function Test-Python {
     param(
@@ -98,20 +98,49 @@ try {
 
 Invoke-Python $python -c "import tkinter, pip"
 Invoke-Python $python -m pip install --upgrade pip pyinstaller
-Invoke-Python $python -m PyInstaller --clean --noconfirm --onefile --windowed `
-    --optimize 2 --name SALFAGenerator ctf_generator_gui.py
 
-$exePath = Join-Path $PSScriptRoot "dist\SALFAGenerator.exe"
-if (-not (Test-Path $exePath)) {
-    throw "Build finished, but $exePath was not created."
-}
-if ((Get-Item $exePath).Length -lt 1MB) {
-    throw "The generated executable is unexpectedly small and may be incomplete."
-}
+# PyInstaller calls Win32 realpath APIs that can fail on mapped, network, or
+# non-Windows volumes. Build entirely on the local system drive, then copy only
+# the verified executable back to the project directory.
+$buildRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("SALFAGenerator-build-" + [guid]::NewGuid().ToString("N"))
+$localDist = Join-Path $buildRoot "dist"
+$localExe = Join-Path $localDist "SALFAGenerator.exe"
+$outputDir = Join-Path $sourceRoot "dist"
+$exePath = Join-Path $outputDir "SALFAGenerator.exe"
 
-$check = Start-Process -FilePath $exePath -ArgumentList "--self-test" -Wait -PassThru
-if ($check.ExitCode -ne 0) {
-    throw "The executable self-test failed with exit code $($check.ExitCode)."
+New-Item -ItemType Directory -Path $buildRoot -Force | Out-Null
+Write-Host "Local build directory: $buildRoot"
+
+try {
+    Copy-Item (Join-Path $sourceRoot "ctf_generator_gui.py") $buildRoot -Force
+    Copy-Item (Join-Path $sourceRoot "flare_generator.py") $buildRoot -Force
+
+    Push-Location $buildRoot
+    try {
+        Invoke-Python $python -m PyInstaller --clean --noconfirm --onefile --windowed `
+            --optimize 2 --name SALFAGenerator ctf_generator_gui.py
+    } finally {
+        Pop-Location
+    }
+
+    if (-not (Test-Path $localExe)) {
+        throw "Build finished, but $localExe was not created."
+    }
+    if ((Get-Item $localExe).Length -lt 1MB) {
+        throw "The generated executable is unexpectedly small and may be incomplete."
+    }
+
+    $check = Start-Process -FilePath $localExe -ArgumentList "--self-test" -Wait -PassThru
+    if ($check.ExitCode -ne 0) {
+        throw "The executable self-test failed with exit code $($check.ExitCode)."
+    }
+
+    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
+    Copy-Item $localExe $exePath -Force
+} finally {
+    if (Test-Path $buildRoot) {
+        Remove-Item $buildRoot -Recurse -Force
+    }
 }
 
 Write-Host "Built and verified: $exePath"
